@@ -57,6 +57,7 @@
 - [x] Initial regions and settlements
 - [x] Initial location hierarchy
 - [x] Initial NPC population with per-NPC personality seeds
+- [x] Initial NPC family/friend/enemy social graph
 - [x] Initial economy and starting prices
 - [x] Fixed world/region/settlement map hierarchy metadata
 - [x] Generation event recorded in the unified local/cloud event stream
@@ -64,8 +65,9 @@
 - [x] Living NPC/economy simulation state initialized with generation
 - [x] NPC routine and mood/energy progression tied to elapsed world time
 - [x] Economy price movement tied to elapsed world time
+- [x] NPC knowledge/rumor/relationship ownership model
 - [x] Calendar event owner scaffold
-- [x] Automated generator, simulation, and generation-preflight tests
+- [x] Automated generator, social, simulation, and generation-preflight tests
 
 ## Player character slice
 
@@ -98,7 +100,6 @@
 - [ ] Validate the web build in CI and fix any compile/runtime issues found there
 - [ ] Configure production Supabase Site URL and exact `/reset-password` redirect URL once deployment URL exists
 - [ ] Add AI-assisted gap proposals to the World Rules creator
-- [ ] Build richer NPC autonomy: schedules, emotions, relationships, knowledge boundaries, life changes and death
 - [ ] Build persistent memory with importance tiers and visual-memory asset contracts
 - [ ] Build calendar/event consequences and recurring world events
 - [ ] Build dynamic economy transactions, jobs, inventories and visible player balance
