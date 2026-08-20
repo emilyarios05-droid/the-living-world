@@ -42,5 +42,21 @@ export function validateWorld(state: WorldState, constitution?: WorldConstitutio
     }
   }
 
+  const generation = state.generation;
+  if (!generation) {
+    issues.push({ severity: 'warning', code: 'WORLD_NOT_GENERATED', message: 'World has rules but no generated geography, population, economy, or map hierarchy yet.' });
+  } else {
+    if (generation.status !== 'ready') issues.push({ severity: 'error', code: 'GENERATION_NOT_READY', message: 'Generated world is not marked ready.' });
+    if (generation.maps.length === 0) issues.push({ severity: 'error', code: 'GENERATION_HAS_NO_MAPS', message: 'Generated world has no map hierarchy.' });
+    if (generation.regions.length === 0) issues.push({ severity: 'error', code: 'GENERATION_HAS_NO_REGIONS', message: 'Generated world has no regions.' });
+    if (generation.settlements.length === 0) issues.push({ severity: 'error', code: 'GENERATION_HAS_NO_SETTLEMENTS', message: 'Generated world has no settlements.' });
+    if (generation.npcs.length === 0) issues.push({ severity: 'error', code: 'GENERATION_HAS_NO_NPCS', message: 'Generated world has no initial NPC population.' });
+    if (generation.economy.prices.length === 0) issues.push({ severity: 'error', code: 'GENERATION_HAS_NO_ECONOMY', message: 'Generated world has no starting prices.' });
+    const worldMaps = generation.maps.filter((map) => map.kind === 'world');
+    if (worldMaps.length !== 1) issues.push({ severity: 'error', code: 'WORLD_MAP_COUNT_INVALID', message: 'Generated world must have exactly one full world map.' });
+    if (generation.maps.some((map) => map.fixed !== true)) issues.push({ severity: 'error', code: 'FIXED_MAP_VIOLATION', message: 'Initial maps must be fixed after world generation.' });
+    if (generation.npcs.some((npc) => npc.alive !== true)) issues.push({ severity: 'error', code: 'INVALID_INITIAL_NPC', message: 'Initial generated NPCs must begin alive.' });
+  }
+
   return { passed: issues.every((issue) => issue.severity !== 'error'), issues };
 }
