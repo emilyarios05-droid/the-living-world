@@ -1,6 +1,7 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { createKernel, createKernelFromState, tick, type LivingWorldKernel } from '../index.js';
 import type { WorldConstitution } from '../world/rules.js';
+import { generateWorld, type WorldGenerationSpec } from '../world/generation.js';
 import type { WorldId } from '../core/types.js';
 import { BrowserLocalWorldRepository } from '../persistence/local.js';
 import { SupabaseWorldRepository } from '../persistence/supabase.js';
@@ -38,6 +39,22 @@ export class WorldSessionManager {
   withConstitution(kernel: LivingWorldKernel, constitution: WorldConstitution): LivingWorldKernel {
     if (constitution.worldId !== kernel.state.metadata.id) throw new Error('RULE_WORLD_BOUNDARY_VIOLATION');
     return { ...kernel, state: { ...kernel.state, constitution, rulesVersion: constitution.version, metadata: { ...kernel.state.metadata, updatedAt: new Date().toISOString() } } };
+  }
+
+  withGeneratedWorld(kernel: LivingWorldKernel, spec: WorldGenerationSpec): LivingWorldKernel {
+    if (kernel.state.metadata.status !== 'active') throw new Error('WORLD_NOT_ACTIVE');
+    const generated = generateWorld(kernel.state.metadata.id, spec);
+    const at = new Date().toISOString();
+    const event = { type: 'WORLD_GENERATED' as const, worldId: kernel.state.metadata.id, at: at as any, generatorVersion: generated.version };
+    const nextState = {
+      ...kernel.state,
+      generation: generated,
+      entityIds: generated.npcs.map((npc) => npc.id),
+      metadata: { ...kernel.state.metadata, updatedAt: at },
+      eventSequence: kernel.state.eventSequence + 1,
+    };
+    kernel.events.publish(event, kernel.state.metadata.id);
+    return { ...kernel, state: nextState };
   }
 
   async save(kernel: LivingWorldKernel, reason: string): Promise<void> { await this.saves.save(kernel.state, reason); }
