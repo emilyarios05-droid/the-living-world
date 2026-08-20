@@ -41,12 +41,24 @@
 - [x] First loaded-world simulation screen
 - [x] Manual save to local and cloud through one save manager
 
+## World creation slice
+
+- [x] World Constitution attached to canonical world state
+- [x] Guided World Rules creator with understandable categories
+- [x] Category examples and player-entered rules
+- [x] Foundational vs evolving rule distinction
+- [x] Rule/world boundary validation
+- [x] Foundational rule locking
+- [x] Draft and final rule persistence
+- [x] World rules editor available from the active-world screen
+- [x] Automated tests for the rules model
+
 ## Next build gates
 
 - [ ] Validate the web build in CI and fix any compile/runtime issues found there
 - [ ] Configure production Supabase Site URL and exact `/reset-password` redirect URL once deployment URL exists
 - [ ] Replace placeholder world cards with generated world metadata
-- [ ] Build the World Rules creator with category explanations/examples and AI gap proposals
+- [ ] Add AI-assisted gap proposals to the World Rules creator
 - [ ] Build the first complete playable simulation slice
 - [ ] Add NPC, memory, economy, calendar, relationship, and travel owners behind contracts
 - [ ] Add world generation and generated-map pipeline
