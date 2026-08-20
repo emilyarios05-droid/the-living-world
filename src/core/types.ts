@@ -1,3 +1,5 @@
+import type { WorldConstitution } from '../world/rules.js';
+
 export type WorldId = string & { readonly __brand: 'WorldId' };
 export type EntityId = string & { readonly __brand: 'EntityId' };
 export type IsoTimestamp = string & { readonly __brand: 'IsoTimestamp' };
@@ -22,26 +24,12 @@ export interface WorldState {
   readonly metadata: WorldMetadata;
   readonly clock: WorldClock;
   readonly rulesVersion: number;
+  readonly constitution: WorldConstitution;
   readonly entityIds: readonly EntityId[];
   readonly eventSequence: number;
 }
 
 export type DomainEvent =
-  | {
-      readonly type: 'WORLD_CREATED';
-      readonly worldId: WorldId;
-      readonly at: IsoTimestamp;
-    }
-  | {
-      readonly type: 'TIME_ADVANCED';
-      readonly worldId: WorldId;
-      readonly fromWorldTimeMs: number;
-      readonly toWorldTimeMs: number;
-      readonly elapsedRealMs: number;
-      readonly at: IsoTimestamp;
-    }
-  | {
-      readonly type: 'WORLD_DELETED';
-      readonly worldId: WorldId;
-      readonly at: IsoTimestamp;
-    };
+  | { readonly type: 'WORLD_CREATED'; readonly worldId: WorldId; readonly at: IsoTimestamp }
+  | { readonly type: 'TIME_ADVANCED'; readonly worldId: WorldId; readonly fromWorldTimeMs: number; readonly toWorldTimeMs: number; readonly elapsedRealMs: number; readonly at: IsoTimestamp }
+  | { readonly type: 'WORLD_DELETED'; readonly worldId: WorldId; readonly at: IsoTimestamp };
