@@ -1,5 +1,6 @@
 import type { GeneratedWorld } from '../world/generation.js';
 import type { WorldConstitution } from '../world/rules.js';
+import type { LivingSimulationState } from '../simulation/living-world.js';
 
 export type WorldId = string & { readonly __brand: 'WorldId' };
 export type EntityId = string & { readonly __brand: 'EntityId' };
@@ -27,6 +28,7 @@ export interface WorldState {
   readonly rulesVersion: number;
   readonly constitution: WorldConstitution;
   readonly generation?: GeneratedWorld;
+  readonly simulation?: LivingSimulationState;
   readonly entityIds: readonly EntityId[];
   readonly eventSequence: number;
 }
