@@ -17,35 +17,87 @@ export interface DiagnosticReport {
   readonly failures: readonly string[];
 }
 
+export interface DiagnosticChange {
+  readonly moduleId: string;
+  readonly version: string;
+  readonly previousVersion?: string;
+  readonly at: string;
+  readonly impactedModules: readonly string[];
+}
+
 export class DiagnosticsRegistry {
   private readonly modules = new Map<string, ModuleContract>();
-  private readonly changeLog: Array<{ moduleId: string; version: string; at: string }> = [];
+  private readonly changeLog: DiagnosticChange[] = [];
 
   register(contract: ModuleContract): void {
-    if (this.modules.has(contract.id)) {
-      throw new Error(`DUPLICATE_MODULE_OWNER:${contract.id}`);
+    const previous = this.modules.get(contract.id);
+    if (previous && previous.owner !== contract.owner) {
+      throw new Error(`DUPLICATE_MODULE_OWNER:${contract.id}:${previous.owner}:${contract.owner}`);
     }
+
     this.modules.set(contract.id, contract);
-    this.changeLog.push({ moduleId: contract.id, version: contract.version, at: new Date().toISOString() });
+    const impactedModules = this.dependencyImpact(contract.id);
+    this.changeLog.push({
+      moduleId: contract.id,
+      version: contract.version,
+      ...(previous ? { previousVersion: previous.version } : {}),
+      at: new Date().toISOString(),
+      impactedModules,
+    });
   }
 
   checkAll(): readonly DiagnosticReport[] {
-    return [...this.modules.values()].map((module) => ({
+    return [...this.modules.values()].map((module) => this.check(module.id));
+  }
+
+  check(moduleId: string): DiagnosticReport {
+    const module = this.modules.get(moduleId);
+    if (!module) {
+      return {
+        moduleId,
+        health: 'failed',
+        checkedAt: new Date().toISOString(),
+        dependencies: [],
+        failures: [`UNKNOWN_MODULE:${moduleId}`],
+      };
+    }
+
+    const failures: string[] = [];
+    for (const dependency of module.dependencies) {
+      if (!this.modules.has(dependency)) failures.push(`MISSING_DEPENDENCY:${dependency}`);
+    }
+
+    let health: Health = failures.length > 0 ? 'failed' : 'healthy';
+    if (failures.length === 0) {
+      try {
+        const reported = module.healthCheck();
+        health = reported;
+      } catch (error) {
+        health = 'failed';
+        failures.push(`HEALTH_CHECK_ERROR:${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+
+    return {
       moduleId: module.id,
-      health: module.healthCheck(),
+      health,
       checkedAt: new Date().toISOString(),
       dependencies: module.dependencies,
-      failures: [],
-    }));
+      failures,
+    };
   }
 
   dependencyImpact(moduleId: string): readonly string[] {
     return [...this.modules.values()]
-      .filter((module) => module.dependencies.includes(moduleId))
+      .filter((module) => module.id !== moduleId && module.dependencies.includes(moduleId))
       .map((module) => module.id);
   }
 
-  getChangeLog(): readonly { moduleId: string; version: string; at: string }[] {
+  getChangeLog(): readonly DiagnosticChange[] {
     return [...this.changeLog];
+  }
+
+  listModules(): readonly ModuleContract[] {
+    return [...this.modules.values()];
   }
 }
