@@ -2,7 +2,7 @@ import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { createKernel, createKernelFromState, tick, type LivingWorldKernel } from '../index.js';
 import type { WorldConstitution } from '../world/rules.js';
 import { generateWorld, type WorldGenerationSpec } from '../world/generation.js';
-import type { WorldId } from '../core/types.js';
+import type { IsoTimestamp, WorldId } from '../core/types.js';
 import { BrowserLocalWorldRepository } from '../persistence/local.js';
 import { SupabaseWorldRepository } from '../persistence/supabase.js';
 import { UnifiedSaveManager } from '../persistence/save-manager.js';
@@ -44,8 +44,8 @@ export class WorldSessionManager {
   withGeneratedWorld(kernel: LivingWorldKernel, spec: WorldGenerationSpec): LivingWorldKernel {
     if (kernel.state.metadata.status !== 'active') throw new Error('WORLD_NOT_ACTIVE');
     const generated = generateWorld(kernel.state.metadata.id, spec);
-    const at = new Date().toISOString();
-    const event = { type: 'WORLD_GENERATED' as const, worldId: kernel.state.metadata.id, at: at as any, generatorVersion: generated.version };
+    const at = new Date().toISOString() as IsoTimestamp;
+    const event = { type: 'WORLD_GENERATED' as const, worldId: kernel.state.metadata.id, at, generatorVersion: generated.version };
     const nextState = {
       ...kernel.state,
       generation: generated,
