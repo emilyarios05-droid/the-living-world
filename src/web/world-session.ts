@@ -2,6 +2,7 @@ import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { createKernel, createKernelFromState, tick, type LivingWorldKernel } from '../index.js';
 import type { WorldConstitution } from '../world/rules.js';
 import { generateWorld, type WorldGenerationSpec } from '../world/generation.js';
+import { initializeLivingSimulation } from '../simulation/living-world.js';
 import type { IsoTimestamp, WorldId } from '../core/types.js';
 import { BrowserLocalWorldRepository } from '../persistence/local.js';
 import { SupabaseWorldRepository } from '../persistence/supabase.js';
@@ -49,6 +50,7 @@ export class WorldSessionManager {
     const nextState = {
       ...kernel.state,
       generation: generated,
+      simulation: initializeLivingSimulation(kernel.state.metadata.id, generated),
       entityIds: generated.npcs.map((npc) => npc.id),
       metadata: { ...kernel.state.metadata, updatedAt: at },
       eventSequence: kernel.state.eventSequence + 1,
