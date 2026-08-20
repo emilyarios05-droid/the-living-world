@@ -28,14 +28,11 @@ export interface PlayerCharacter {
 }
 
 export interface CharacterValidationIssue { readonly field: string; readonly message: string; }
+export function wordCount(text: string): number { return text.trim() ? text.trim().split(/\s+/u).length : 0; }
 
-export function wordCount(text: string): number {
-  return text.trim() ? text.trim().split(/\s+/u).length : 0;
-}
-
-export function validatePlayerCharacter(character: PlayerCharacter): readonly CharacterValidationIssue[] {
+export function validatePlayerCharacter(character: PlayerCharacter, expectedWorldId: WorldId): readonly CharacterValidationIssue[] {
   const issues: CharacterValidationIssue[] = [];
-  if (character.worldId !== character.worldId) issues.push({ field: 'worldId', message: 'Character belongs to an invalid world.' });
+  if (character.worldId !== expectedWorldId) issues.push({ field: 'worldId', message: 'Character belongs to another world.' });
   if (!character.name.trim()) issues.push({ field: 'name', message: 'Character name is required.' });
   if (!Number.isInteger(character.age) || character.age < 18) issues.push({ field: 'age', message: 'Player characters must be 18 or older.' });
   if (!character.role.trim()) issues.push({ field: 'role', message: 'A role is required.' });
