@@ -51,7 +51,16 @@
 - [x] Foundational rule locking
 - [x] Draft and final rule persistence
 - [x] World rules editor available from the active-world screen
-- [x] Automated tests for the rules model
+- [x] World identity controls (name, genre, tone)
+- [x] Deterministic first-world generator
+- [x] Initial regions and settlements
+- [x] Initial location hierarchy
+- [x] Initial NPC population with per-NPC personality seeds
+- [x] Initial economy and starting prices
+- [x] Fixed world/region/settlement map hierarchy metadata
+- [x] Generation event recorded in the world event stream
+- [x] Generated-world invariants included in preflight diagnostics
+- [x] Automated generator and generation-preflight tests
 
 ## Next build gates
 
@@ -61,7 +70,7 @@
 - [ ] Add AI-assisted gap proposals to the World Rules creator
 - [ ] Build the first complete playable simulation slice
 - [ ] Add NPC, memory, economy, calendar, relationship, and travel owners behind contracts
-- [ ] Add world generation and generated-map pipeline
+- [ ] Replace procedural map prompts with the image-generation/map asset pipeline
 - [ ] Add AI provider gateway/orchestrator implementation
 - [ ] Expand diagnostics to cover every module and dependency contract
 - [ ] Build offline catch-up simulation beyond the current elapsed-clock foundation
