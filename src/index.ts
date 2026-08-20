@@ -10,11 +10,8 @@ export interface LivingWorldKernel {
   readonly diagnostics: DiagnosticsRegistry;
 }
 
-export function createKernel(ownerAccountId: string, nowMs = Date.now()): LivingWorldKernel {
-  const state = createWorld(ownerAccountId, nowMs);
-  const events = new DomainEventBus();
+function createDiagnostics(): DiagnosticsRegistry {
   const diagnostics = new DiagnosticsRegistry();
-
   diagnostics.register({
     id: 'simulation.clock',
     version: '1.1.0',
@@ -23,7 +20,6 @@ export function createKernel(ownerAccountId: string, nowMs = Date.now()): Living
     invariants: ['world time never moves backwards', 'clock has one authoritative owner'],
     healthCheck: () => 'healthy',
   });
-
   diagnostics.register({
     id: 'world.state',
     version: '1.1.0',
@@ -32,7 +28,6 @@ export function createKernel(ownerAccountId: string, nowMs = Date.now()): Living
     invariants: ['every state belongs to exactly one World ID'],
     healthCheck: () => 'healthy',
   });
-
   diagnostics.register({
     id: 'simulation.command-boundary',
     version: '1.0.0',
@@ -41,6 +36,17 @@ export function createKernel(ownerAccountId: string, nowMs = Date.now()): Living
     invariants: ['commands cannot cross World IDs', 'simulation commands resolve through owning systems'],
     healthCheck: () => 'healthy',
   });
+  return diagnostics;
+}
+
+export function createKernel(ownerAccountId: string, nowMs = Date.now()): LivingWorldKernel {
+  return createKernelFromState(createWorld(ownerAccountId, nowMs), true);
+}
+
+export function createKernelFromState(state: WorldState, emitCreationEvent = false): LivingWorldKernel {
+  const events = new DomainEventBus();
+  const diagnostics = createDiagnostics();
+  if (!emitCreationEvent) return { state, events, diagnostics };
 
   const created: DomainEvent = {
     type: 'WORLD_CREATED',
@@ -48,7 +54,6 @@ export function createKernel(ownerAccountId: string, nowMs = Date.now()): Living
     at: state.metadata.createdAt,
   };
   events.publish(created, state.metadata.id);
-
   return { state: appendEvent(state, created), events, diagnostics };
 }
 
