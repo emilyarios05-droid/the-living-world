@@ -1,5 +1,6 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { createKernel, createKernelFromState, tick, type LivingWorldKernel } from '../index.js';
+import type { WorldConstitution } from '../world/rules.js';
 import type { WorldId } from '../core/types.js';
 import { BrowserLocalWorldRepository } from '../persistence/local.js';
 import { SupabaseWorldRepository } from '../persistence/supabase.js';
@@ -22,11 +23,7 @@ export class WorldSessionManager {
     const kernel = createKernel(owner.id);
     await this.cloud.create(kernel.state);
     await this.local.create(kernel.state);
-    await this.cloud.appendEvent({
-      type: 'WORLD_CREATED',
-      worldId: kernel.state.metadata.id,
-      at: kernel.state.metadata.createdAt,
-    }, kernel.state.eventSequence);
+    await this.cloud.appendEvent({ type: 'WORLD_CREATED', worldId: kernel.state.metadata.id, at: kernel.state.metadata.createdAt }, kernel.state.eventSequence);
     await this.saves.save(kernel.state, 'world-created');
     return kernel;
   }
@@ -36,15 +33,13 @@ export class WorldSessionManager {
     return state ? createKernelFromState(state) : null;
   }
 
-  advance(kernel: LivingWorldKernel, nowMs = Date.now()): LivingWorldKernel {
-    return tick(kernel, nowMs);
+  advance(kernel: LivingWorldKernel, nowMs = Date.now()): LivingWorldKernel { return tick(kernel, nowMs); }
+
+  withConstitution(kernel: LivingWorldKernel, constitution: WorldConstitution): LivingWorldKernel {
+    if (constitution.worldId !== kernel.state.metadata.id) throw new Error('RULE_WORLD_BOUNDARY_VIOLATION');
+    return { ...kernel, state: { ...kernel.state, constitution, rulesVersion: constitution.version, metadata: { ...kernel.state.metadata, updatedAt: new Date().toISOString() } } };
   }
 
-  async save(kernel: LivingWorldKernel, reason: string): Promise<void> {
-    await this.saves.save(kernel.state, reason);
-  }
-
-  async delete(worldId: WorldId): Promise<void> {
-    await this.saves.deleteWorld(worldId);
-  }
+  async save(kernel: LivingWorldKernel, reason: string): Promise<void> { await this.saves.save(kernel.state, reason); }
+  async delete(worldId: WorldId): Promise<void> { await this.saves.deleteWorld(worldId); }
 }
