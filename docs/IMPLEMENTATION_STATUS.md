@@ -67,6 +67,22 @@
 - [x] Calendar event owner scaffold
 - [x] Automated generator, simulation, and generation-preflight tests
 
+## Player character slice
+
+- [x] Player character is canonical world state
+- [x] 18+ age validation
+- [x] 2,000-word backstory limit
+- [x] Role selection
+- [x] First-person / third-person POV selection
+- [x] Adult-life / college / no-further-schooling starting choice
+- [x] Avatar description fields for eventual image generation
+- [x] Character/world boundary validation
+- [x] Character creation event persistence
+- [x] Character creator is part of new-world entry flow
+- [x] Character editor is available from the active world
+- [x] Character preflight diagnostics
+- [x] Automated character validation tests
+
 ## AI / asset architecture slice
 
 - [x] Specialist AI ownership contracts
@@ -82,7 +98,6 @@
 - [ ] Validate the web build in CI and fix any compile/runtime issues found there
 - [ ] Configure production Supabase Site URL and exact `/reset-password` redirect URL once deployment URL exists
 - [ ] Add AI-assisted gap proposals to the World Rules creator
-- [ ] Build the player character creator (18+), avatar prompt, backstory, role, POV and world-entry state
 - [ ] Build richer NPC autonomy: schedules, emotions, relationships, knowledge boundaries, life changes and death
 - [ ] Build persistent memory with importance tiers and visual-memory asset contracts
 - [ ] Build calendar/event consequences and recurring world events
