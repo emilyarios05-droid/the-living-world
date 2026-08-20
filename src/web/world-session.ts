@@ -3,6 +3,7 @@ import { createKernel, createKernelFromState, tick, type LivingWorldKernel } fro
 import type { WorldConstitution } from '../world/rules.js';
 import { generateWorld, type WorldGenerationSpec } from '../world/generation.js';
 import { initializeLivingSimulation } from '../simulation/living-world.js';
+import { validatePlayerCharacter, type PlayerCharacter } from '../player/character.js';
 import type { IsoTimestamp, WorldId } from '../core/types.js';
 import { BrowserLocalWorldRepository } from '../persistence/local.js';
 import { SupabaseWorldRepository } from '../persistence/supabase.js';
@@ -14,12 +15,7 @@ export class WorldSessionManager {
   readonly local: BrowserLocalWorldRepository;
   readonly cloud: SupabaseWorldRepository;
   readonly saves: UnifiedSaveManager;
-
-  constructor(private readonly client: SupabaseClient) {
-    this.local = new BrowserLocalWorldRepository();
-    this.cloud = new SupabaseWorldRepository(client);
-    this.saves = new UnifiedSaveManager(this.local, this.cloud);
-  }
+  constructor(private readonly client: SupabaseClient) { this.local = new BrowserLocalWorldRepository(); this.cloud = new SupabaseWorldRepository(client); this.saves = new UnifiedSaveManager(this.local, this.cloud); }
 
   async create(owner: User): Promise<LivingWorldKernel> {
     const kernel = createKernel(owner.id);
@@ -29,18 +25,9 @@ export class WorldSessionManager {
     await this.saves.save(kernel.state, 'world-created');
     return kernel;
   }
-
-  async load(worldId: WorldId, source: SaveSource): Promise<LivingWorldKernel | null> {
-    const state = await this.saves.load(worldId, source);
-    return state ? createKernelFromState(state) : null;
-  }
-
+  async load(worldId: WorldId, source: SaveSource): Promise<LivingWorldKernel | null> { const state = await this.saves.load(worldId, source); return state ? createKernelFromState(state) : null; }
   advance(kernel: LivingWorldKernel, nowMs = Date.now()): LivingWorldKernel { return tick(kernel, nowMs); }
-
-  withConstitution(kernel: LivingWorldKernel, constitution: WorldConstitution): LivingWorldKernel {
-    if (constitution.worldId !== kernel.state.metadata.id) throw new Error('RULE_WORLD_BOUNDARY_VIOLATION');
-    return { ...kernel, state: { ...kernel.state, constitution, rulesVersion: constitution.version, metadata: { ...kernel.state.metadata, updatedAt: new Date().toISOString() } } };
-  }
+  withConstitution(kernel: LivingWorldKernel, constitution: WorldConstitution): LivingWorldKernel { if (constitution.worldId !== kernel.state.metadata.id) throw new Error('RULE_WORLD_BOUNDARY_VIOLATION'); return { ...kernel, state: { ...kernel.state, constitution, rulesVersion: constitution.version, metadata: { ...kernel.state.metadata, updatedAt: new Date().toISOString() } } }; }
 
   async withGeneratedWorld(kernel: LivingWorldKernel, spec: WorldGenerationSpec): Promise<LivingWorldKernel> {
     if (kernel.state.metadata.status !== 'active') throw new Error('WORLD_NOT_ACTIVE');
@@ -48,18 +35,17 @@ export class WorldSessionManager {
     const generated = generateWorld(kernel.state.metadata.id, spec);
     const at = new Date().toISOString() as IsoTimestamp;
     const event = { type: 'WORLD_GENERATED' as const, worldId: kernel.state.metadata.id, at, generatorVersion: generated.version };
-    const nextState = {
-      ...kernel.state,
-      generation: generated,
-      simulation: initializeLivingSimulation(kernel.state.metadata.id, generated),
-      entityIds: generated.npcs.map((npc) => npc.id),
-      metadata: { ...kernel.state.metadata, updatedAt: at },
-      eventSequence: kernel.state.eventSequence + 1,
-    };
-    await this.saves.appendEvent(event, nextState.eventSequence);
-    await this.saves.save(nextState, 'world-generated');
-    kernel.events.publish(event, kernel.state.metadata.id);
-    return { ...kernel, state: nextState };
+    const nextState = { ...kernel.state, generation: generated, simulation: initializeLivingSimulation(kernel.state.metadata.id, generated), entityIds: generated.npcs.map((npc) => npc.id), metadata: { ...kernel.state.metadata, updatedAt: at }, eventSequence: kernel.state.eventSequence + 1 };
+    await this.saves.appendEvent(event, nextState.eventSequence); await this.saves.save(nextState, 'world-generated'); kernel.events.publish(event, kernel.state.metadata.id); return { ...kernel, state: nextState };
+  }
+
+  async withPlayerCharacter(kernel: LivingWorldKernel, character: PlayerCharacter): Promise<LivingWorldKernel> {
+    const issues = validatePlayerCharacter(character, kernel.state.metadata.id);
+    if (issues.length) throw new Error(issues.map((issue) => `${issue.field}: ${issue.message}`).join(' '));
+    const at = new Date().toISOString() as IsoTimestamp;
+    const event = { type: 'PLAYER_CHARACTER_CREATED' as const, worldId: kernel.state.metadata.id, characterId: character.id, at };
+    const nextState = { ...kernel.state, playerCharacter: character, entityIds: [...new Set([...kernel.state.entityIds, character.id])], metadata: { ...kernel.state.metadata, updatedAt: at }, eventSequence: kernel.state.eventSequence + 1 };
+    await this.saves.appendEvent(event, nextState.eventSequence); await this.saves.save(nextState, 'player-character-created'); kernel.events.publish(event, kernel.state.metadata.id); return { ...kernel, state: nextState };
   }
 
   async save(kernel: LivingWorldKernel, reason: string): Promise<void> { await this.saves.save(kernel.state, reason); }
