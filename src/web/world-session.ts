@@ -25,7 +25,7 @@ export class WorldSessionManager {
     const kernel = createKernel(owner.id);
     await this.cloud.create(kernel.state);
     await this.local.create(kernel.state);
-    await this.cloud.appendEvent({ type: 'WORLD_CREATED', worldId: kernel.state.metadata.id, at: kernel.state.metadata.createdAt }, kernel.state.eventSequence);
+    await this.saves.appendEvent({ type: 'WORLD_CREATED', worldId: kernel.state.metadata.id, at: kernel.state.metadata.createdAt }, 1);
     await this.saves.save(kernel.state, 'world-created');
     return kernel;
   }
@@ -42,8 +42,9 @@ export class WorldSessionManager {
     return { ...kernel, state: { ...kernel.state, constitution, rulesVersion: constitution.version, metadata: { ...kernel.state.metadata, updatedAt: new Date().toISOString() } } };
   }
 
-  withGeneratedWorld(kernel: LivingWorldKernel, spec: WorldGenerationSpec): LivingWorldKernel {
+  async withGeneratedWorld(kernel: LivingWorldKernel, spec: WorldGenerationSpec): Promise<LivingWorldKernel> {
     if (kernel.state.metadata.status !== 'active') throw new Error('WORLD_NOT_ACTIVE');
+    if (kernel.state.generation) return kernel;
     const generated = generateWorld(kernel.state.metadata.id, spec);
     const at = new Date().toISOString() as IsoTimestamp;
     const event = { type: 'WORLD_GENERATED' as const, worldId: kernel.state.metadata.id, at, generatorVersion: generated.version };
@@ -55,6 +56,8 @@ export class WorldSessionManager {
       metadata: { ...kernel.state.metadata, updatedAt: at },
       eventSequence: kernel.state.eventSequence + 1,
     };
+    await this.saves.appendEvent(event, nextState.eventSequence);
+    await this.saves.save(nextState, 'world-generated');
     kernel.events.publish(event, kernel.state.metadata.id);
     return { ...kernel, state: nextState };
   }
