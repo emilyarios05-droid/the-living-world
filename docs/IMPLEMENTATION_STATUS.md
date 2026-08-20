@@ -16,7 +16,7 @@
 - [x] Persistence contracts
 - [x] Browser local persistence adapter
 - [x] Supabase cloud persistence adapter
-- [x] Unified save manager
+- [x] Unified save manager with shared event persistence
 - [x] Supabase worlds/events/snapshots schema
 - [x] RLS and concurrency-safe three-world database guard
 - [x] Permanent username profile trigger and constraints
@@ -40,6 +40,7 @@
 - [x] Actual local/cloud load source choice
 - [x] First loaded-world simulation screen
 - [x] Manual save to local and cloud through one save manager
+- [x] Saved-world cards use generated world metadata when available
 
 ## World creation slice
 
@@ -58,23 +59,40 @@
 - [x] Initial NPC population with per-NPC personality seeds
 - [x] Initial economy and starting prices
 - [x] Fixed world/region/settlement map hierarchy metadata
-- [x] Generation event recorded in the world event stream
+- [x] Generation event recorded in the unified local/cloud event stream
 - [x] Generated-world invariants included in preflight diagnostics
-- [x] Automated generator and generation-preflight tests
+- [x] Living NPC/economy simulation state initialized with generation
+- [x] NPC routine and mood/energy progression tied to elapsed world time
+- [x] Economy price movement tied to elapsed world time
+- [x] Calendar event owner scaffold
+- [x] Automated generator, simulation, and generation-preflight tests
+
+## AI / asset architecture slice
+
+- [x] Specialist AI ownership contracts
+- [x] AI agent registry
+- [x] AI proposal orchestrator with explicit provider boundary
+- [x] Explicit refusal when no AI provider is configured
+- [x] Fixed map asset generation contract
+- [x] Image/map provider boundary with immutable initial-map requirement
+- [x] Automated AI ownership and map pipeline tests
 
 ## Next build gates
 
 - [ ] Validate the web build in CI and fix any compile/runtime issues found there
 - [ ] Configure production Supabase Site URL and exact `/reset-password` redirect URL once deployment URL exists
-- [ ] Replace placeholder world cards with generated world metadata
 - [ ] Add AI-assisted gap proposals to the World Rules creator
-- [ ] Build the first complete playable simulation slice
-- [ ] Add NPC, memory, economy, calendar, relationship, and travel owners behind contracts
-- [ ] Replace procedural map prompts with the image-generation/map asset pipeline
-- [ ] Add AI provider gateway/orchestrator implementation
+- [ ] Build the player character creator (18+), avatar prompt, backstory, role, POV and world-entry state
+- [ ] Build richer NPC autonomy: schedules, emotions, relationships, knowledge boundaries, life changes and death
+- [ ] Build persistent memory with importance tiers and visual-memory asset contracts
+- [ ] Build calendar/event consequences and recurring world events
+- [ ] Build dynamic economy transactions, jobs, inventories and visible player balance
+- [ ] Build travel and object permanence
+- [ ] Replace procedural map prompts with the actual image-generation/map asset provider
+- [ ] Add real AI provider implementations and multi-agent orchestration
 - [ ] Expand diagnostics to cover every module and dependency contract
 - [ ] Build offline catch-up simulation beyond the current elapsed-clock foundation
-- [ ] Build generational/death systems
+- [ ] Build generational/death systems and hidden offspring continuation
 - [ ] Build communications and visual-memory systems
 - [ ] Build eventual two-player foundation
 
