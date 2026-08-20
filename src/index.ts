@@ -1,7 +1,7 @@
 import { DiagnosticsRegistry } from './diagnostics/registry.js';
 import { DomainEventBus } from './core/event-bus.js';
-import { advanceClock } from './core/clock.js';
-import { appendEvent, createWorld } from './core/world-state.js';
+import { createWorld, appendEvent } from './core/world-state.js';
+import { resolveCommand } from './simulation/engine.js';
 import type { DomainEvent, WorldState } from './core/types.js';
 
 export interface LivingWorldKernel {
@@ -17,7 +17,7 @@ export function createKernel(ownerAccountId: string, nowMs = Date.now()): Living
 
   diagnostics.register({
     id: 'simulation.clock',
-    version: '1.0.0',
+    version: '1.1.0',
     owner: 'SimulationClock',
     dependencies: [],
     invariants: ['world time never moves backwards', 'clock has one authoritative owner'],
@@ -26,10 +26,19 @@ export function createKernel(ownerAccountId: string, nowMs = Date.now()): Living
 
   diagnostics.register({
     id: 'world.state',
-    version: '1.0.0',
+    version: '1.1.0',
     owner: 'CanonicalWorldState',
     dependencies: ['simulation.clock'],
     invariants: ['every state belongs to exactly one World ID'],
+    healthCheck: () => 'healthy',
+  });
+
+  diagnostics.register({
+    id: 'simulation.command-boundary',
+    version: '1.0.0',
+    owner: 'CanonicalWorldState',
+    dependencies: ['simulation.clock', 'world.state'],
+    invariants: ['commands cannot cross World IDs', 'simulation commands resolve through owning systems'],
     healthCheck: () => 'healthy',
   });
 
@@ -44,21 +53,16 @@ export function createKernel(ownerAccountId: string, nowMs = Date.now()): Living
 }
 
 export function tick(kernel: LivingWorldKernel, nowMs = Date.now()): LivingWorldKernel {
-  const result = advanceClock(kernel.state.clock, nowMs);
-  if (result.elapsedRealMs === 0) return kernel;
-
-  const event: DomainEvent = {
-    type: 'TIME_ADVANCED',
+  const result = resolveCommand(kernel.state, {
+    type: 'ADVANCE_TIME',
     worldId: kernel.state.metadata.id,
-    fromWorldTimeMs: kernel.state.clock.worldTimeMs,
-    toWorldTimeMs: result.clock.worldTimeMs,
-    elapsedRealMs: result.elapsedRealMs,
-    at: result.clock.lastAdvancedAtReal,
-  };
+    requestedAtReal: new Date(nowMs).toISOString(),
+    requestedBy: 'simulation-clock',
+    nowRealMs: nowMs,
+  });
 
-  kernel.events.publish(event, kernel.state.metadata.id);
-  return {
-    ...kernel,
-    state: appendEvent({ ...kernel.state, clock: result.clock }, event),
-  };
+  for (const event of result.events) kernel.events.publish(event, kernel.state.metadata.id);
+  if (result.events.length === 0) return kernel;
+
+  return { ...kernel, state: result.state };
 }
