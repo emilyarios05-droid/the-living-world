@@ -1,4 +1,4 @@
-import type { WorldId, WorldState } from '../core/types.js';
+import type { DomainEvent, WorldId, WorldState } from '../core/types.js';
 import type { SaveManager, WorldRepository, WorldSnapshot } from './contracts.js';
 
 export class UnifiedSaveManager implements SaveManager {
@@ -14,12 +14,12 @@ export class UnifiedSaveManager implements SaveManager {
       state: world,
       createdAt: new Date().toISOString(),
     };
-
-    await Promise.all([
-      this.local.saveSnapshot(snapshot),
-      this.cloud.saveSnapshot(snapshot),
-    ]);
+    await Promise.all([this.local.saveSnapshot(snapshot), this.cloud.saveSnapshot(snapshot)]);
     void reason;
+  }
+
+  async appendEvent(event: DomainEvent, sequence: number): Promise<void> {
+    await Promise.all([this.local.appendEvent(event, sequence), this.cloud.appendEvent(event, sequence)]);
   }
 
   async load(worldId: WorldId, source: 'local' | 'cloud'): Promise<WorldState | null> {
@@ -27,9 +27,6 @@ export class UnifiedSaveManager implements SaveManager {
   }
 
   async deleteWorld(worldId: WorldId): Promise<void> {
-    await Promise.all([
-      this.local.delete(worldId),
-      this.cloud.delete(worldId),
-    ]);
+    await Promise.all([this.local.delete(worldId), this.cloud.delete(worldId)]);
   }
 }

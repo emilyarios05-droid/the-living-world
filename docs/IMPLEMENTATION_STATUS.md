@@ -16,7 +16,7 @@
 - [x] Persistence contracts
 - [x] Browser local persistence adapter
 - [x] Supabase cloud persistence adapter
-- [x] Unified save manager
+- [x] Unified save manager with shared event persistence
 - [x] Supabase worlds/events/snapshots schema
 - [x] RLS and concurrency-safe three-world database guard
 - [x] Permanent username profile trigger and constraints
@@ -40,6 +40,7 @@
 - [x] Actual local/cloud load source choice
 - [x] First loaded-world simulation screen
 - [x] Manual save to local and cloud through one save manager
+- [x] Saved-world cards use generated world metadata when available
 
 ## World creation slice
 
@@ -51,21 +52,63 @@
 - [x] Foundational rule locking
 - [x] Draft and final rule persistence
 - [x] World rules editor available from the active-world screen
-- [x] Automated tests for the rules model
+- [x] World identity controls (name, genre, tone)
+- [x] Deterministic first-world generator
+- [x] Initial regions and settlements
+- [x] Initial location hierarchy
+- [x] Initial NPC population with per-NPC personality seeds
+- [x] Initial NPC family/friend/enemy social graph
+- [x] Initial economy and starting prices
+- [x] Fixed world/region/settlement map hierarchy metadata
+- [x] Generation event recorded in the unified local/cloud event stream
+- [x] Generated-world invariants included in preflight diagnostics
+- [x] Living NPC/economy simulation state initialized with generation
+- [x] NPC routine and mood/energy progression tied to elapsed world time
+- [x] Economy price movement tied to elapsed world time
+- [x] NPC knowledge/rumor/relationship ownership model
+- [x] Calendar event owner scaffold
+- [x] Automated generator, social, simulation, and generation-preflight tests
+
+## Player character slice
+
+- [x] Player character is canonical world state
+- [x] 18+ age validation
+- [x] 2,000-word backstory limit
+- [x] Role selection
+- [x] First-person / third-person POV selection
+- [x] Adult-life / college / no-further-schooling starting choice
+- [x] Avatar description fields for eventual image generation
+- [x] Character/world boundary validation
+- [x] Character creation event persistence
+- [x] Character creator is part of new-world entry flow
+- [x] Character editor is available from the active world
+- [x] Character preflight diagnostics
+- [x] Automated character validation tests
+
+## AI / asset architecture slice
+
+- [x] Specialist AI ownership contracts
+- [x] AI agent registry
+- [x] AI proposal orchestrator with explicit provider boundary
+- [x] Explicit refusal when no AI provider is configured
+- [x] Fixed map asset generation contract
+- [x] Image/map provider boundary with immutable initial-map requirement
+- [x] Automated AI ownership and map pipeline tests
 
 ## Next build gates
 
 - [ ] Validate the web build in CI and fix any compile/runtime issues found there
 - [ ] Configure production Supabase Site URL and exact `/reset-password` redirect URL once deployment URL exists
-- [ ] Replace placeholder world cards with generated world metadata
 - [ ] Add AI-assisted gap proposals to the World Rules creator
-- [ ] Build the first complete playable simulation slice
-- [ ] Add NPC, memory, economy, calendar, relationship, and travel owners behind contracts
-- [ ] Add world generation and generated-map pipeline
-- [ ] Add AI provider gateway/orchestrator implementation
+- [ ] Build persistent memory with importance tiers and visual-memory asset contracts
+- [ ] Build calendar/event consequences and recurring world events
+- [ ] Build dynamic economy transactions, jobs, inventories and visible player balance
+- [ ] Build travel and object permanence
+- [ ] Replace procedural map prompts with the actual image-generation/map asset provider
+- [ ] Add real AI provider implementations and multi-agent orchestration
 - [ ] Expand diagnostics to cover every module and dependency contract
 - [ ] Build offline catch-up simulation beyond the current elapsed-clock foundation
-- [ ] Build generational/death systems
+- [ ] Build generational/death systems and hidden offspring continuation
 - [ ] Build communications and visual-memory systems
 - [ ] Build eventual two-player foundation
 

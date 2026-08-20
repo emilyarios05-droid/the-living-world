@@ -1,0 +1,56 @@
+import type { EntityId, IsoTimestamp, WorldId } from '../core/types.js';
+
+export interface WorldGenerationSpec { readonly name: string; readonly genre: 'fantasy' | 'romantasy' | 'science-fiction' | 'modern' | 'historical' | 'custom'; readonly tone: string; readonly seed: string; }
+export interface GeneratedMap { readonly id: string; readonly kind: 'world' | 'region' | 'settlement' | 'building'; readonly title: string; readonly parentMapId?: string; readonly generatedPrompt: string; readonly fixed: boolean; }
+export interface GeneratedRegion { readonly id: EntityId; readonly name: string; readonly climate: string; readonly terrain: string; readonly settlementIds: readonly EntityId[]; }
+export interface GeneratedSettlement { readonly id: EntityId; readonly name: string; readonly regionId: EntityId; readonly population: number; readonly prosperity: number; readonly locationIds: readonly EntityId[]; }
+export interface GeneratedLocation { readonly id: EntityId; readonly name: string; readonly settlementId: EntityId; readonly kind: 'home' | 'shop' | 'workplace' | 'public' | 'school' | 'hospital' | 'transport'; }
+export interface GeneratedNpc {
+  readonly id: EntityId;
+  readonly name: string;
+  readonly age: number;
+  readonly role: string;
+  readonly personalitySeed: string;
+  readonly regionId: EntityId;
+  readonly settlementId: EntityId;
+  readonly familyNpcIds: readonly EntityId[];
+  readonly friendNpcIds: readonly EntityId[];
+  readonly enemyNpcIds: readonly EntityId[];
+  readonly alive: boolean;
+}
+export interface GeneratedPrice { readonly category: string; readonly item: string; readonly amount: number; readonly currency: string; }
+export interface GeneratedEconomy { readonly currencyName: string; readonly currencySymbol: string; readonly priceLevel: number; readonly prices: readonly GeneratedPrice[]; }
+export interface GeneratedWorld { readonly version: 1; readonly status: 'ready'; readonly source: 'procedural-scaffold'; readonly generatedAt: IsoTimestamp; readonly spec: WorldGenerationSpec; readonly maps: readonly GeneratedMap[]; readonly regions: readonly GeneratedRegion[]; readonly settlements: readonly GeneratedSettlement[]; readonly locations: readonly GeneratedLocation[]; readonly npcs: readonly GeneratedNpc[]; readonly economy: GeneratedEconomy; }
+
+const hash = (input: string): number => { let value = 2166136261; for (let index = 0; index < input.length; index += 1) { value ^= input.charCodeAt(index); value = Math.imul(value, 16777619); } return value >>> 0; };
+const pick = <T>(values: readonly T[], seed: string, index: number): T => values[hash(`${seed}:${index}`) % values.length]!;
+const id = (prefix: string, seed: string, index: number): EntityId => `${prefix}-${hash(`${seed}:${index}`).toString(16)}` as EntityId;
+const REGION_NAMES = ['Northreach', 'Greenvale', 'Suncoast', 'Highmere', 'Redfen', 'Moonwater'];
+const CLIMATES = ['temperate', 'cool coastal', 'dry continental', 'humid', 'mountainous', 'subtropical'];
+const TERRAINS = ['rolling plains', 'old forest', 'river valleys', 'highlands', 'marshland', 'coastal cliffs'];
+const SETTLEMENT_NAMES = ['Alderwick', 'Bellmere', 'Crownford', 'Dunhaven', 'Emberfall', 'Fairhollow', 'Greyhaven', 'Harborwatch', 'Ivycross', 'Juniper', 'Kingsrest', 'Larkspur'];
+const ROLES = ['teacher', 'merchant', 'engineer', 'doctor', 'artist', 'farmer', 'cook', 'builder', 'researcher', 'driver', 'administrator', 'journalist'];
+const FIRST_NAMES = ['Mara', 'Jonah', 'Elena', 'Rowan', 'Theo', 'Nadia', 'Iris', 'Caleb', 'Maeve', 'Julian', 'Soren', 'Avery', 'Leah', 'Milo', 'Dahlia', 'Noah', 'Cora', 'Elias', 'Wren', 'Silas'];
+const LOCATIONS = ['Home', 'Market', 'Workplace', 'Town Hall', 'Clinic', 'Transit Hub'];
+
+export function generateWorld(worldId: WorldId, spec: WorldGenerationSpec, now = new Date()): GeneratedWorld {
+  const regions: GeneratedRegion[] = Array.from({ length: 4 }, (_, regionIndex) => { const regionId = id('region', worldId, regionIndex); const settlementIds = [0, 1].map((offset) => id('settlement', worldId, regionIndex * 2 + offset)); return { id: regionId, name: pick(REGION_NAMES, spec.seed, regionIndex), climate: pick(CLIMATES, spec.seed, regionIndex + 20), terrain: pick(TERRAINS, spec.seed, regionIndex + 40), settlementIds }; });
+  const settlements: GeneratedSettlement[] = regions.flatMap((region, regionIndex) => region.settlementIds.map((settlementId, settlementIndex) => { const index = regionIndex * 2 + settlementIndex; const locationIds = LOCATIONS.map((_, locationIndex) => id('location', worldId, index * 10 + locationIndex)); return { id: settlementId, name: pick(SETTLEMENT_NAMES, spec.seed, index + 60), regionId: region.id, population: 2500 + (hash(`${spec.seed}:population:${index}`) % 12000), prosperity: 0.35 + ((hash(`${spec.seed}:prosperity:${index}`) % 60) / 100), locationIds }; }));
+  const locations: GeneratedLocation[] = settlements.flatMap((settlement) => settlement.locationIds.map((locationId, index) => ({ id: locationId, name: LOCATIONS[index]!, settlementId: settlement.id, kind: (['home', 'shop', 'workplace', 'public', 'hospital', 'transport'] as const)[index]! })));
+  const baseNpcs: GeneratedNpc[] = Array.from({ length: 24 }, (_, index) => { const settlement = settlements[index % settlements.length]!; return { id: id('npc', worldId, index), name: `${pick(FIRST_NAMES, spec.seed, index)} ${pick(['Vale', 'Mercer', 'Hart', 'Reed', 'Stone', 'Wells', 'Parker', 'Rivers'], spec.seed, index + 100)}`, age: 18 + (hash(`${spec.seed}:age:${index}`) % 58), role: pick(ROLES, spec.seed, index + 120), personalitySeed: `${hash(`${worldId}:personality:${index}`).toString(16)}-${pick(['warm', 'reserved', 'ambitious', 'curious', 'practical', 'impulsive', 'patient', 'volatile'], spec.seed, index + 140)}`, regionId: settlement.regionId, settlementId: settlement.id, familyNpcIds: [], friendNpcIds: [], enemyNpcIds: [], alive: true }; });
+  const npcs: GeneratedNpc[] = baseNpcs.map((npc, index) => {
+    const familyNpcIds = [index > 0 ? baseNpcs[index - 1]!.id : baseNpcs[1]!.id].filter((relatedId) => relatedId !== npc.id);
+    const friendNpcIds = [baseNpcs[(index + 3) % baseNpcs.length]!.id, baseNpcs[(index + 7) % baseNpcs.length]!.id].filter((relatedId) => relatedId !== npc.id && !familyNpcIds.includes(relatedId));
+    const enemyNpcIds = hash(`${spec.seed}:enemy:${index}`) % 5 === 0 ? [baseNpcs[(index + 11) % baseNpcs.length]!.id] : [];
+    return { ...npc, familyNpcIds, friendNpcIds, enemyNpcIds };
+  });
+  const maps: GeneratedMap[] = [
+    { id: `${worldId}-world-map`, kind: 'world', title: `${spec.name} — World Map`, generatedPrompt: `A beautiful fixed world map for a ${spec.genre} world named ${spec.name}; ${spec.tone}; readable regions and travel routes; painterly game-book style.`, fixed: true },
+    ...regions.map((region) => ({ id: `${region.id}-map`, kind: 'region' as const, title: `${region.name} Region`, parentMapId: `${worldId}-world-map`, generatedPrompt: `Detailed regional map of ${region.name}, ${region.terrain}, ${region.climate}; consistent with the world map; fixed illustrated game map.`, fixed: true })),
+    ...settlements.map((settlement) => ({ id: `${settlement.id}-map`, kind: 'settlement' as const, title: `${settlement.name} Town Map`, parentMapId: `${settlement.regionId}-map`, generatedPrompt: `Clickable town map of ${settlement.name}; streets, homes, shops, workplaces, public spaces, clinic and transit; fixed illustrated game map.`, fixed: true })),
+  ];
+  const currencyName = spec.genre === 'science-fiction' ? 'Credits' : spec.genre === 'fantasy' || spec.genre === 'romantasy' ? 'Crowns' : 'Dollars';
+  const currencySymbol = spec.genre === 'science-fiction' ? '¤' : spec.genre === 'fantasy' || spec.genre === 'romantasy' ? '₡' : '$';
+  const economy: GeneratedEconomy = { currencyName, currencySymbol, priceLevel: 1, prices: [{ category: 'food', item: 'basic meal', amount: 14, currency: currencyName }, { category: 'food', item: 'coffee', amount: 5, currency: currencyName }, { category: 'transport', item: 'local fare', amount: 3, currency: currencyName }, { category: 'clothing', item: 'everyday outfit', amount: 65, currency: currencyName }, { category: 'home', item: 'basic furniture', amount: 220, currency: currencyName }, { category: 'communication', item: 'personal device', amount: 480, currency: currencyName }] };
+  return { version: 1, status: 'ready', source: 'procedural-scaffold', generatedAt: now.toISOString() as IsoTimestamp, spec, maps, regions, settlements, locations, npcs, economy };
+}
