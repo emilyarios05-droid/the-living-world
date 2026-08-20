@@ -11,12 +11,14 @@
 - [x] Evolving diagnostics registry with dependency checks and change history
 - [x] Simulation command boundary
 - [x] World Constitution model with foundational/evolving rules
+- [x] Deterministic world preflight validation
+- [x] Provider-agnostic AI contracts
 - [x] Persistence contracts
 - [x] Browser local persistence adapter
 - [x] Supabase cloud persistence adapter
 - [x] Unified save manager
 - [x] Supabase worlds/events/snapshots schema
-- [x] RLS and three-world database guard
+- [x] RLS and concurrency-safe three-world database guard
 - [x] Permanent username profile trigger and constraints
 - [x] Supabase security advisor clean after schema changes
 - [x] Automated type/test CI definition
@@ -46,9 +48,13 @@
 - [ ] Implement New Game world creation flow and World Rules creator
 - [ ] Build the first playable simulation slice
 - [ ] Add NPC, memory, economy, calendar, relationship, and travel owners behind contracts
-- [ ] Add world preflight validation
-- [ ] Add AI provider gateway/orchestrator
+- [ ] Add world generation and generated-map pipeline
+- [ ] Add AI provider gateway/orchestrator implementation
 - [ ] Expand diagnostics to cover every module and dependency contract
+- [ ] Build offline catch-up simulation
+- [ ] Build generational/death systems
+- [ ] Build communications and visual-memory systems
+- [ ] Build eventual two-player foundation
 
 ## Boundary
 
