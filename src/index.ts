@@ -29,6 +29,14 @@ function createDiagnostics(): DiagnosticsRegistry {
     healthCheck: () => 'healthy',
   });
   diagnostics.register({
+    id: 'world.generation',
+    version: '1.0.0',
+    owner: 'WorldGenerator',
+    dependencies: ['world.state'],
+    invariants: ['generated content belongs to exactly one World ID', 'fixed map hierarchy is immutable after generation'],
+    healthCheck: () => 'healthy',
+  });
+  diagnostics.register({
     id: 'simulation.command-boundary',
     version: '1.0.0',
     owner: 'CanonicalWorldState',
@@ -48,11 +56,7 @@ export function createKernelFromState(state: WorldState, emitCreationEvent = fal
   const diagnostics = createDiagnostics();
   if (!emitCreationEvent) return { state, events, diagnostics };
 
-  const created: DomainEvent = {
-    type: 'WORLD_CREATED',
-    worldId: state.metadata.id,
-    at: state.metadata.createdAt,
-  };
+  const created: DomainEvent = { type: 'WORLD_CREATED', worldId: state.metadata.id, at: state.metadata.createdAt };
   events.publish(created, state.metadata.id);
   return { state: appendEvent(state, created), events, diagnostics };
 }
@@ -68,6 +72,5 @@ export function tick(kernel: LivingWorldKernel, nowMs = Date.now()): LivingWorld
 
   for (const event of result.events) kernel.events.publish(event, kernel.state.metadata.id);
   if (result.events.length === 0) return kernel;
-
   return { ...kernel, state: result.state };
 }
