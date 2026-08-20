@@ -23,7 +23,7 @@
 - [x] Supabase security advisor clean after schema changes
 - [x] Automated type/test CI definition
 
-## First UI slice
+## First UI / session slice
 
 - [x] Authentication-first shell
 - [x] Email/password login
@@ -34,24 +34,25 @@
 - [x] Logout
 - [x] Real-world clock on home screen
 - [x] World slots (maximum three)
-- [x] New world creation
-- [x] World deletion
+- [x] New world creation through the engine kernel + persistence boundary
+- [x] World deletion through the unified save manager
 - [x] Cloud-backed world listing
+- [x] Actual local/cloud load source choice
+- [x] First loaded-world simulation screen
+- [x] Manual save to local and cloud through one save manager
 
 ## Next build gates
 
 - [ ] Validate the web build in CI and fix any compile/runtime issues found there
 - [ ] Configure production Supabase Site URL and exact `/reset-password` redirect URL once deployment URL exists
 - [ ] Replace placeholder world cards with generated world metadata
-- [ ] Implement actual Load flow through the unified save manager
-- [ ] Implement local/cloud source selection in the UI
-- [ ] Implement New Game world creation flow and World Rules creator
-- [ ] Build the first playable simulation slice
+- [ ] Build the World Rules creator with category explanations/examples and AI gap proposals
+- [ ] Build the first complete playable simulation slice
 - [ ] Add NPC, memory, economy, calendar, relationship, and travel owners behind contracts
 - [ ] Add world generation and generated-map pipeline
 - [ ] Add AI provider gateway/orchestrator implementation
 - [ ] Expand diagnostics to cover every module and dependency contract
-- [ ] Build offline catch-up simulation
+- [ ] Build offline catch-up simulation beyond the current elapsed-clock foundation
 - [ ] Build generational/death systems
 - [ ] Build communications and visual-memory systems
 - [ ] Build eventual two-player foundation
